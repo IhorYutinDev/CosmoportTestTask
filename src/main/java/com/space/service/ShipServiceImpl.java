@@ -5,17 +5,13 @@ import com.space.model.Ship;
 import com.space.model.ShipType;
 import com.space.repository.ShipRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-
 import java.util.*;
 
 @Service
 public class ShipServiceImpl implements ShipService {
-
     private final ShipRepository shipRepository;
 
     @Autowired
@@ -37,13 +33,16 @@ public class ShipServiceImpl implements ShipService {
             return null;
         }
 
-
         if (ship.getUsed() == null) {
             ship.setUsed(false);
         }
+
         ship.setSpeed(Math.round(ship.getSpeed() * 100.0) / 100.0);
+
         ship.setRating(getRating(ship));
+
         shipRepository.save(ship);
+
         return ship;
     }
 
@@ -57,8 +56,7 @@ public class ShipServiceImpl implements ShipService {
         Date shipProdDate = ship.getProdDate();
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(shipProdDate);
-        int year = calendar.get(Calendar.YEAR);
-        return year;
+        return calendar.get(Calendar.YEAR);
     }
 
     @Override
@@ -95,6 +93,7 @@ public class ShipServiceImpl implements ShipService {
         if (!shipRepository.existsById(id)) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
+
         Ship shipUpdated = shipRepository.findById(id).get();
 
         if (ship.getName() != null) {
@@ -222,6 +221,7 @@ public class ShipServiceImpl implements ShipService {
                                        Double maxRating) {
 
         List<Ship> shipList = shipRepository.findAll();
+
         if (name != null) {
             shipList.removeIf(ship -> !ship.getName().contains(name));
         }
@@ -273,5 +273,4 @@ public class ShipServiceImpl implements ShipService {
         return shipRepository.existsById(id)
                 ? shipRepository.findById(id).get() : null;
     }
-
 }

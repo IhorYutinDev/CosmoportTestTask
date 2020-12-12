@@ -3,15 +3,12 @@ package com.space.service;
 import com.space.controller.ShipOrder;
 import com.space.model.Ship;
 import com.space.model.ShipType;
-import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
 public interface ShipService {
     Ship create(Ship ship);
-
-    List<Ship> readAll();
 
     Ship read(Long id);
 

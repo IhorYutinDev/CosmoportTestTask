@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @RestController
@@ -55,10 +54,7 @@ public class MyShipController {
                                                  @RequestParam(required = false) Integer minCrewSize,
                                                  @RequestParam(required = false) Integer maxCrewSize,
                                                  @RequestParam(required = false) Double minRating,
-                                                 @RequestParam(required = false) Double maxRating,
-                                                 @RequestParam(required = false) ShipOrder order,
-                                                 @RequestParam(required = false) Integer pageNumber,
-                                                 @RequestParam(required = false) Integer pageSize) {
+                                                 @RequestParam(required = false) Double maxRating) {
 
         List<Ship> shipList = shipService.filterByAllField(name, planet, shipType, after, before, isUsed, minSpeed,
                 maxSpeed, minCrewSize, maxCrewSize, minRating, maxRating);
@@ -104,6 +100,4 @@ public class MyShipController {
         return shipService.deleteShip(Long.parseLong(id)) ?
                 new ResponseEntity<>(HttpStatus.OK) : new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
-
-
 }
