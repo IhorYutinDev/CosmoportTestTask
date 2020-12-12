@@ -37,10 +37,11 @@ public class ShipServiceImpl implements ShipService {
             return null;
         }
 
+
         if (ship.getUsed() == null) {
             ship.setUsed(false);
         }
-
+        ship.setSpeed(Math.round(ship.getSpeed() * 100.0) / 100.0);
         ship.setRating(getRating(ship));
         shipRepository.save(ship);
         return ship;
@@ -222,11 +223,11 @@ public class ShipServiceImpl implements ShipService {
 
         List<Ship> shipList = shipRepository.findAll();
         if (name != null) {
-            shipList.removeIf(ship -> !ship.getName().equals(name));
+            shipList.removeIf(ship -> !ship.getName().contains(name));
         }
 
         if (planet != null) {
-            shipList.removeIf(ship -> !ship.getPlanet().equals(planet));
+            shipList.removeIf(ship -> !ship.getPlanet().contains(planet));
         }
 
         if (shipType != null) {
