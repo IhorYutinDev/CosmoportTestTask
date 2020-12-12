@@ -74,15 +74,6 @@ public class MyShipController {
                 : new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteShip(@PathVariable String id) {
-        if (!shipService.isValid(id)) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
-        return shipService.deleteShip(Long.parseLong(id)) ?
-                new ResponseEntity<>(HttpStatus.OK) : new ResponseEntity<>(HttpStatus.NOT_FOUND);
-    }
-
     @GetMapping("/{id}")
     public ResponseEntity<Ship> getShipById(@PathVariable String id) {
         if (!shipService.isValid(id)) {
@@ -104,4 +95,15 @@ public class MyShipController {
         return ship != null ? shipService.update(ship, Long.parseLong(id)) :
                 new ResponseEntity<>(shipService.getShipById(Long.parseLong(id)), HttpStatus.OK);
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteShip(@PathVariable String id) {
+        if (!shipService.isValid(id)) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        return shipService.deleteShip(Long.parseLong(id)) ?
+                new ResponseEntity<>(HttpStatus.OK) : new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
+
+
 }
