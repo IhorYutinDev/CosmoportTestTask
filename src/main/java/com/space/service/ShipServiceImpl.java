@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+
 import java.util.*;
 
 @Service
@@ -57,11 +58,6 @@ public class ShipServiceImpl implements ShipService {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(shipProdDate);
         return calendar.get(Calendar.YEAR);
-    }
-
-    @Override
-    public List<Ship> readAll() {
-        return shipRepository.findAll();
     }
 
     @Override
@@ -158,7 +154,6 @@ public class ShipServiceImpl implements ShipService {
 
         return new ResponseEntity<>(shipUpdated, HttpStatus.OK);
     }
-
 
     @Override
     public boolean deleteShip(Long id) {
