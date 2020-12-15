@@ -185,15 +185,16 @@ public class ShipServiceImpl implements ShipService {
         if (pageSize == null) {
             pageSize = DEFAULT_PAGE_SIZE;
         }
+        List<Ship> sortedShipsByOrder = order!= null ? sort(shipsFiltered, order) : sort(shipsFiltered, ShipOrder.ID);
 
         List<Ship> result = new ArrayList<>();
         for (int i = pageNumber * pageSize; i < (pageNumber + 1) * pageSize; i++) {
-            if (i < shipsFiltered.size()) {
-                result.add(shipsFiltered.get(i));
+            if (i < sortedShipsByOrder.size()) {
+                result.add(sortedShipsByOrder.get(i));
             }
         }
 
-        return order != null ? sort(result, order) : sort(result, ShipOrder.ID);
+        return result;
     }
 
     @Override
