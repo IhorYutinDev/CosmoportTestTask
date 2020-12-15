@@ -3,6 +3,7 @@ package com.space.controller;
 import com.space.model.Ship;
 import com.space.model.ShipType;
 import com.space.service.ShipService;
+import com.space.service.TypeResultUpdateStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -57,7 +58,7 @@ public class MyShipController {
                                                  @RequestParam(required = false) Double minRating,
                                                  @RequestParam(required = false) Double maxRating) {
 
-        List<Ship> shipList = shipService.filterByAllField(name, planet, shipType, after, before, isUsed, minSpeed,
+        List<Ship> shipList = shipService.getShipsFilteredByAllField(name, planet, shipType, after, before, isUsed, minSpeed,
                 maxSpeed, minCrewSize, maxCrewSize, minRating, maxRating);
 
         return new ResponseEntity<>(shipList.size(), HttpStatus.OK);
@@ -73,7 +74,7 @@ public class MyShipController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Ship> getShipById(@PathVariable String id) {
-        if (!shipService.isValid(id)) {
+        if (!isIdValidNumber(id)) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
         Ship ship = shipService.getShipById(Long.parseLong(id));
@@ -86,19 +87,43 @@ public class MyShipController {
     @PostMapping("/{id}")
     public ResponseEntity<Ship> upDateShip(@PathVariable String id,
                                            @RequestBody Ship ship) {
-        if (!shipService.isValid(id)) {
+        if (!isIdValidNumber(id)) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-        return ship != null ? shipService.update(ship, Long.parseLong(id)) :
-                new ResponseEntity<>(shipService.getShipById(Long.parseLong(id)), HttpStatus.OK);
+
+        if (ship != null) {
+            TypeResultUpdateStatus typeResultUpdateStatus = shipService.update(ship, Long.parseLong(id));
+            switch (typeResultUpdateStatus) {
+                case OK:
+                    Ship shipUpdated = shipService.getShipById(Long.parseLong(id));
+                    return new ResponseEntity<>(shipUpdated, HttpStatus.OK);
+                case NOT_FOUND:
+                    return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+                case BAD_REQUEST:
+                    return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            }
+        }
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteShip(@PathVariable String id) {
-        if (!shipService.isValid(id)) {
+        if (!isIdValidNumber(id)) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
         return shipService.deleteShip(Long.parseLong(id)) ?
                 new ResponseEntity<>(HttpStatus.OK) : new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
+
+    private boolean isIdValidNumber(String idString) {
+        try {
+            long id = Long.parseLong(idString);
+            if (id < 1) {
+                return false;
+            }
+        } catch (NumberFormatException e) {
+            return false;
+        }
+        return true;
     }
 }

@@ -5,8 +5,6 @@ import com.space.model.Ship;
 import com.space.model.ShipType;
 import com.space.repository.ShipRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -14,6 +12,15 @@ import java.util.*;
 @Service
 public class ShipServiceImpl implements ShipService {
     private final ShipRepository shipRepository;
+    private final static int MAX_LENGTH_BOUND_NAME_PLANET = 50;
+    private final static int DEFAULT_PAGE_SIZE = 3;
+    private final static int DEFAULT_PAGE_NUMBER = 0;
+    private final static double MIN_SPEED = 0.01;
+    private final static double MAX_SPEED = 0.99;
+    private final static int AFTER_PROD_YEAR = 2800;
+    private final static int BEFORE_PROD_YEAR = 3019;
+    private final static int MIN_CREW_SIZE = 1;
+    private final static int MAX_CREW_SIZE = 9999;
 
     @Autowired
     public ShipServiceImpl(ShipRepository shipRepository) {
@@ -22,15 +29,7 @@ public class ShipServiceImpl implements ShipService {
 
     @Override
     public Ship create(Ship ship) {
-        String name = ship.getName();
-        String planet = ship.getPlanet();
-        Double speed = ship.getSpeed();
-        Integer crewSize = ship.getCrewSize();
-
-        if (ship.getShipType() == null || name == null || name.length() > 50 || name.isEmpty()
-                || planet == null || planet.length() > 50 || planet.isEmpty() || speed == null || speed > 0.99
-                || speed < 0.01 || ship.getProdDate() == null || getYear(ship) < 2800 || getYear(ship) > 3019
-                || crewSize == null || crewSize < 1 || crewSize > 9999) {
+        if (isShipValuesNotValid(ship)) {
             return null;
         }
 
@@ -47,21 +46,30 @@ public class ShipServiceImpl implements ShipService {
         return ship;
     }
 
+    private boolean isShipValuesNotValid(Ship ship) {
+        String name = ship.getName();
+        String planet = ship.getPlanet();
+        Double speed = ship.getSpeed();
+        Integer crewSize = ship.getCrewSize();
+
+        return ship.getShipType() == null || name == null || name.length() > MAX_LENGTH_BOUND_NAME_PLANET
+                || name.isEmpty() || planet == null || planet.length() > MAX_LENGTH_BOUND_NAME_PLANET
+                || planet.isEmpty() || speed == null || speed > MAX_SPEED || speed < MIN_SPEED
+                || ship.getProdDate() == null || getYear(ship) < AFTER_PROD_YEAR || getYear(ship) > BEFORE_PROD_YEAR
+                || crewSize == null || crewSize < MIN_CREW_SIZE || crewSize > MAX_CREW_SIZE;
+    }
+
     private double getRating(Ship ship) {
         double k = ship.getUsed() ? 0.5 : 1.0;
         int year = getYear(ship);
-        return Math.round((100 * 80 * ship.getSpeed() * k) / (3019 - year + 1)) / 100.0;
+        return Math.round((100 * 80 * ship.getSpeed() * k) / (BEFORE_PROD_YEAR - year + 1)) / 100.0;
     }
 
     private int getYear(Ship ship) {
-        Date shipProdDate = ship.getProdDate();
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(shipProdDate);
-        return calendar.get(Calendar.YEAR);
+        return ship.getProdDate().getYear() + 1900;
     }
 
-    @Override
-    public List<Ship> sort(List<Ship> shipList, ShipOrder shipOrder) {
+    private List<Ship> sort(List<Ship> shipList, ShipOrder shipOrder) {
         switch (shipOrder) {
             case ID:
                 shipList.sort(Comparator.comparing(Ship::getId));
@@ -80,79 +88,77 @@ public class ShipServiceImpl implements ShipService {
     }
 
     @Override
-    public Ship read(Long id) {
-        return shipRepository.getOne(id);
-    }
-
-    @Override
-    public ResponseEntity<Ship> update(Ship ship, Long id) {
+    public TypeResultUpdateStatus update(Ship ship, Long id) {
         if (!shipRepository.existsById(id)) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return TypeResultUpdateStatus.NOT_FOUND;
         }
 
-        Ship shipUpdated = shipRepository.findById(id).get();
+        Ship shipUpdated = shipRepository.findById(id).orElse(null);
 
-        if (ship.getName() != null) {
-            String name = ship.getName();
-            if (name.length() > 50 || name.isEmpty()) {
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-            } else {
-                shipUpdated.setName(name);
+        if (shipUpdated != null) {
+            if (ship.getName() != null) {
+                String name = ship.getName();
+                if (name.length() > MAX_LENGTH_BOUND_NAME_PLANET || name.isEmpty()) {
+                    return TypeResultUpdateStatus.BAD_REQUEST;
+                } else {
+                    shipUpdated.setName(name);
+                }
             }
-        }
 
-        if (ship.getPlanet() != null) {
-            String planet = ship.getPlanet();
-            if (planet.length() > 50 || planet.isEmpty()) {
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-            } else {
-                shipUpdated.setPlanet(planet);
+            if (ship.getPlanet() != null) {
+                String planet = ship.getPlanet();
+                if (planet.length() > MAX_LENGTH_BOUND_NAME_PLANET || planet.isEmpty()) {
+                    return TypeResultUpdateStatus.BAD_REQUEST;
+                } else {
+                    shipUpdated.setPlanet(planet);
+                }
             }
-        }
 
-        if (ship.getCrewSize() != null) {
-            Integer crewSize = ship.getCrewSize();
-            if (crewSize > 9999 || crewSize < 1) {
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-            } else {
-                shipUpdated.setCrewSize(crewSize);
+            if (ship.getCrewSize() != null) {
+                Integer crewSize = ship.getCrewSize();
+                if (crewSize > 9999 || crewSize < 1) {
+                    return TypeResultUpdateStatus.BAD_REQUEST;
+                } else {
+                    shipUpdated.setCrewSize(crewSize);
+                }
             }
-        }
 
-        if (ship.getSpeed() != null) {
-            Double speed = ship.getSpeed();
-            if (speed > 0.99 || speed < 0.01) {
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-            } else {
-                shipUpdated.setSpeed(Math.round(100.0 * speed) / 100.0);
+            if (ship.getSpeed() != null) {
+                Double speed = ship.getSpeed();
+                if (speed > MAX_SPEED || speed < MIN_SPEED) {
+                    return TypeResultUpdateStatus.BAD_REQUEST;
+                } else {
+                    shipUpdated.setSpeed(Math.round(100.0 * speed) / 100.0);
+                }
             }
-        }
 
-        if (ship.getProdDate() != null) {
-            int year = getYear(ship);
-            if (year > 3019 || year < 2800) {
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-            } else {
-                shipUpdated.setProdDate(ship.getProdDate());
+            if (ship.getProdDate() != null) {
+                int year = getYear(ship);
+                if (year > BEFORE_PROD_YEAR || year < AFTER_PROD_YEAR) {
+                    return TypeResultUpdateStatus.BAD_REQUEST;
+                } else {
+                    shipUpdated.setProdDate(ship.getProdDate());
+                }
             }
-        }
 
-        if (ship.getUsed() != null) {
-            shipUpdated.setUsed(ship.getUsed());
-        }
+            if (ship.getUsed() != null) {
+                shipUpdated.setUsed(ship.getUsed());
+            }
 
-        if (ship.getShipType() != null) {
-            shipUpdated.setShipType(ship.getShipType());
-        }
+            if (ship.getShipType() != null) {
+                shipUpdated.setShipType(ship.getShipType());
+            }
 
-        if (ship.getProdDate() != null || ship.getSpeed() != null || ship.getUsed() != null) {
-            Double rating = getRating(shipUpdated);
-            shipUpdated.setRating(rating);
-        }
+            if (ship.getProdDate() != null || ship.getSpeed() != null || ship.getUsed() != null) {
+                Double rating = getRating(shipUpdated);
+                shipUpdated.setRating(rating);
+            }
 
-        shipRepository.save(shipUpdated);
+            shipRepository.save(shipUpdated);
 
-        return new ResponseEntity<>(shipUpdated, HttpStatus.OK);
+            return TypeResultUpdateStatus.OK;
+
+        } else return TypeResultUpdateStatus.NOT_FOUND;
     }
 
     @Override
@@ -165,32 +171,19 @@ public class ShipServiceImpl implements ShipService {
     }
 
     @Override
-    public boolean isValid(String idString) {
-        try {
-            long id = Long.parseLong(idString);
-            if (id < 1) {
-                return false;
-            }
-        } catch (NumberFormatException e) {
-            return false;
-        }
-        return true;
-    }
-
-    @Override
     public List<Ship> getShips(String name, String planet, ShipType shipType, Long after,
                                Long before, Boolean isUsed, Double minSpeed, Double maxSpeed,
                                Integer minCrewSize, Integer maxCrewSize, Double minRating,
                                Double maxRating, ShipOrder order, Integer pageNumber, Integer pageSize) {
 
-        List<Ship> shipsFiltered = filterByAllField(name, planet, shipType, after, before, isUsed, minSpeed,
+        List<Ship> shipsFiltered = getShipsFilteredByAllField(name, planet, shipType, after, before, isUsed, minSpeed,
                 maxSpeed, minCrewSize, maxCrewSize, minRating, maxRating);
 
         if (pageNumber == null) {
-            pageNumber = 0;
+            pageNumber = DEFAULT_PAGE_NUMBER;
         }
         if (pageSize == null) {
-            pageSize = 3;
+            pageSize = DEFAULT_PAGE_SIZE;
         }
 
         List<Ship> result = new ArrayList<>();
@@ -200,20 +193,14 @@ public class ShipServiceImpl implements ShipService {
             }
         }
 
-        if (order != null) {
-            result = sort(result, order);
-        } else {
-            result = sort(result, ShipOrder.ID);
-        }
-
-        return result;
+        return order != null ? sort(result, order) : sort(result, ShipOrder.ID);
     }
 
     @Override
-    public List<Ship> filterByAllField(String name, String planet, ShipType shipType, Long after,
-                                       Long before, Boolean isUsed, Double minSpeed, Double maxSpeed,
-                                       Integer minCrewSize, Integer maxCrewSize, Double minRating,
-                                       Double maxRating) {
+    public List<Ship> getShipsFilteredByAllField(String name, String planet, ShipType shipType, Long after,
+                                                 Long before, Boolean isUsed, Double minSpeed, Double maxSpeed,
+                                                 Integer minCrewSize, Integer maxCrewSize, Double minRating,
+                                                 Double maxRating) {
 
         List<Ship> shipList = shipRepository.findAll();
 
@@ -265,7 +252,6 @@ public class ShipServiceImpl implements ShipService {
 
     @Override
     public Ship getShipById(Long id) {
-        return shipRepository.existsById(id)
-                ? shipRepository.findById(id).get() : null;
+        return shipRepository.findById(id).orElse(null);
     }
 }
