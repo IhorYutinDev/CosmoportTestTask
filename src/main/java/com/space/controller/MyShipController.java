@@ -45,7 +45,7 @@ public class MyShipController {
     }
 
     @GetMapping("/count")
-    public ResponseEntity<Integer> getShipsCount(@RequestParam(required = false) String name,
+    public int getShipsCount(@RequestParam(required = false) String name,
                                                  @RequestParam(required = false) String planet,
                                                  @RequestParam(required = false) ShipType shipType,
                                                  @RequestParam(required = false) Long after,
@@ -61,7 +61,7 @@ public class MyShipController {
         List<Ship> shipList = shipService.getShipsFilteredByAllField(name, planet, shipType, after, before, isUsed, minSpeed,
                 maxSpeed, minCrewSize, maxCrewSize, minRating, maxRating);
 
-        return new ResponseEntity<>(shipList.size(), HttpStatus.OK);
+        return shipList.size();
     }
 
     @PostMapping

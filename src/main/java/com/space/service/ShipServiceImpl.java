@@ -66,7 +66,18 @@ public class ShipServiceImpl implements ShipService {
     }
 
     private int getYear(Ship ship) {
-        return ship.getProdDate().getYear() + 1900;
+        Date date = ship.getProdDate();
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+
+        return calendar.get(Calendar.YEAR);
+    }
+
+    private int getYearFromMilis(Long milis) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(new Date(milis));
+
+        return calendar.get(Calendar.YEAR);
     }
 
     private List<Ship> sort(List<Ship> shipList, ShipOrder shipOrder) {
@@ -185,7 +196,7 @@ public class ShipServiceImpl implements ShipService {
         if (pageSize == null) {
             pageSize = DEFAULT_PAGE_SIZE;
         }
-        List<Ship> sortedShipsByOrder = order!= null ? sort(shipsFiltered, order) : sort(shipsFiltered, ShipOrder.ID);
+        List<Ship> sortedShipsByOrder = order != null ? sort(shipsFiltered, order) : sort(shipsFiltered, ShipOrder.ID);
 
         List<Ship> result = new ArrayList<>();
         for (int i = pageNumber * pageSize; i < (pageNumber + 1) * pageSize; i++) {
@@ -218,12 +229,11 @@ public class ShipServiceImpl implements ShipService {
         }
 
         if (after != null) {
-            shipList.removeIf(ship -> ship.getProdDate().getTime() < after);
+            shipList.removeIf(ship -> getYear(ship) < getYearFromMilis(after));
         }
         if (before != null) {
-            shipList.removeIf(ship -> ship.getProdDate().getTime() > before);
+            shipList.removeIf(ship -> getYear(ship) > getYearFromMilis(before));
         }
-
         if (minSpeed != null) {
             shipList.removeIf(ship -> ship.getSpeed() < minSpeed);
         }
