@@ -73,13 +73,6 @@ public class ShipServiceImpl implements ShipService {
         return calendar.get(Calendar.YEAR);
     }
 
-    private int getYearFromMilis(Long milis) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(new Date(milis));
-
-        return calendar.get(Calendar.YEAR);
-    }
-
     private List<Ship> sort(List<Ship> shipList, ShipOrder shipOrder) {
         switch (shipOrder) {
             case ID:
