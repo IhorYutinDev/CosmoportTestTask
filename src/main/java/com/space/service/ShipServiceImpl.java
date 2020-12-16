@@ -229,10 +229,10 @@ public class ShipServiceImpl implements ShipService {
         }
 
         if (after != null) {
-            shipList.removeIf(ship -> getYear(ship) < getYearFromMilis(after));
+            shipList.removeIf(ship -> ship.getProdDate().getTime() < after);
         }
         if (before != null) {
-            shipList.removeIf(ship -> getYear(ship) > getYearFromMilis(before));
+            shipList.removeIf(ship -> ship.getProdDate().getTime() > before);
         }
         if (minSpeed != null) {
             shipList.removeIf(ship -> ship.getSpeed() < minSpeed);
